@@ -1,0 +1,16 @@
+{
+  "name": "ちょこっとアラーム",
+  "short_name": "アラーム",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6fb",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "chokotto_alarmA1-192.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    }
+  ]
+}
