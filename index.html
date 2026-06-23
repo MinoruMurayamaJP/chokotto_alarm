@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ホイール選択テスト 7行完全表示版</title>
+<style>
+:root{--bg:#f5f7fb;--panel:#fff;--line:#d8e2f0;--text:#142033;--blue:#0b78ff;--blue2:#e3f2fd}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Yu Gothic",Meiryo,system-ui,sans-serif;background:var(--bg);color:var(--text);overscroll-behavior:none}
+.app{max-width:760px;margin:20px auto;padding:14px}
+h1{font-size:24px;margin:0 0 12px;text-align:center}
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px}
+.result{text-align:center;font-size:40px;font-weight:900;margin:16px 0}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{height:56px;border-radius:14px;border:1px solid #9ec5fe;background:var(--blue2);color:#075fc5;font-size:18px;font-weight:900}
+button.primary{background:#0b78ff;color:#fff;border-color:#0b78ff}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.35);display:none;align-items:center;justify-content:center;padding:14px;z-index:50}
+.modal.show{display:flex}
+.dialog{background:#fff;border-radius:26px;width:min(720px,100%);max-height:94vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.28)}
+.head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.head h2{margin:0;font-size:22px}
+.iconBtn{width:56px;height:56px;border-radius:50%;font-size:32px;display:flex;align-items:center;justify-content:center}
+.ok{background:#0b78ff;color:#fff;border-color:#0b78ff}
+.close{background:#f5f5f5;color:#111;border-color:#d0d0d0}
+.body{padding:14px 18px 20px}
+.caption{text-align:center;font-size:21px;font-weight:900;margin:4px 0 8px;letter-spacing:.15em}
+
+/* 7行完全表示：上3・中央1・下3 */
+.picker{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  width:100%;
+  height:308px;           /* 34*6 + 58 + 余白 */
+  margin:0 auto 14px;
+  border-radius:34px;
+  background:linear-gradient(180deg,#fff 0%,#f9fbfd 48%,#f1f5f8 100%);
+  box-shadow:0 12px 30px rgba(15,23,42,.10), inset 0 1px 0 rgba(255,255,255,.95);
+  overflow:hidden;
+  touch-action:none;
+}
+.picker:before{
+  content:"";
+  position:absolute;
+  left:24px;
+  right:24px;
+  top:calc(50% - 29px);
+  height:58px;
+  border-radius:999px;
+  background:#e9edf0;
+  z-index:0;
+}
+.picker:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.88) 0%,rgba(255,255,255,.35) 12%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 70%,rgba(255,255,255,.35) 88%,rgba(255,255,255,.88) 100%);
+  pointer-events:none;
+  z-index:3;
+}
+.col{
+  position:relative;
+  z-index:2;
+  width:86px;
+  height:294px;           /* 34*6 + 58 + 32 */
+  overflow:visible;       /* ここが重要：7行を隠さない */
+  touch-action:none;
+  -webkit-user-select:none;
+  user-select:none;
+}
+.items{
+  height:294px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  overflow:visible;
+}
+.item{
+  height:34px;
+  line-height:34px;
+  text-align:center;
+  font-size:24px;
+  font-weight:800;
+  color:#a8adb4;
+}
+.item.far{font-size:20px;color:#d6d9dd}
+.item.mid{font-size:27px;color:#8e949c}
+.item.active{
+  height:58px;
+  line-height:58px;
+  font-size:48px;
+  color:#20242a;
+}
+.colon{
+  position:relative;
+  z-index:2;
+  width:18px;
+  text-align:center;
+  font-size:34px;
+  font-weight:900;
+}
+.hit{position:absolute;left:0;right:0;z-index:6}
+.hit.up{top:0;height:42%}
+.hit.down{bottom:0;height:42%}
+.log{font-size:13px;color:#475569;background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px;height:72px;overflow:auto;white-space:pre-wrap}
+@media(max-width:640px){
+ .app{margin:8px auto;padding:10px}
+ h1{font-size:21px}
+ .result{font-size:36px}
+ .picker{height:292px;gap:6px}
+ .col{height:280px;width:78px}
+ .items{height:280px}
+ .item{height:32px;line-height:32px;font-size:22px}
+ .item.active{height:56px;line-height:56px;font-size:44px}
+ .colon{font-size:32px;width:14px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>ホイール選択テスト 7行完全表示版</h1>
+  <div class="panel">
+    <div class="result" id="result">00:00:00</div>
+    <div class="btns">
+      <button class="primary" id="openBtn">Popを開く</button>
+      <button id="resetBtn">00:00:00</button>
+    </div>
+    <p style="text-align:center;color:#64748b;font-weight:700">上3行・中央1行・下3行を完全表示</p>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="dialog">
+    <div class="head">
+      <button class="iconBtn close" id="cancelBtn">×</button>
+      <h2>時刻を選択</h2>
+      <button class="iconBtn ok" id="okBtn">✓</button>
+    </div>
+    <div class="body">
+      <div class="caption">HH　　MM　　SS</div>
+      <div class="picker" id="picker">
+        <div class="col" data-id="hh"><div class="items" id="hhItems"></div><div class="hit up"></div><div class="hit down"></div></div>
+        <div class="colon">:</div>
+        <div class="col" data-id="mm"><div class="items" id="mmItems"></div><div class="hit up"></div><div class="hit down"></div></div>
+        <div class="colon">:</div>
+        <div class="col" data-id="ss"><div class="items" id="ssItems"></div><div class="hit up"></div><div class="hit down"></div></div>
+      </div>
+      <div class="result" id="modalResult">00:00:00</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const vals={hh:0,mm:0,ss:0};
+let temp={hh:0,mm:0,ss:0};
+
+function log(s){
+  const el=$('log');
+  el.textContent=new Date().toLocaleTimeString()+' '+s+'\n'+el.textContent;
+}
+function maxOf(id){return id==='hh'?23:59}
+function around(id,n){
+  const max=maxOf(id);
+  return [n-3,n-2,n-1,n,n+1,n+2,n+3].map(x=>{
+    while(x<0)x+=max+1;
+    while(x>max)x-=max+1;
+    return x;
+  });
+}
+function fmtObj(o){return `${pad(o.hh)}:${pad(o.mm)}:${pad(o.ss)}`}
+
+function renderCol(id){
+  const box=$(id+'Items');
+  const n=temp[id];
+  box.innerHTML='';
+  around(id,n).forEach((v,i)=>{
+    const d=document.createElement('div');
+    let cls='item';
+    if(i===3) cls+=' active';
+    else if(i===0 || i===6) cls+=' far';
+    else if(i===2 || i===4) cls+=' mid';
+    d.className=cls;
+    d.textContent=pad(v);
+    d.dataset.pos=i;
+    d.dataset.value=v;
+    const choose=(e)=>{
+      e.preventDefault(); e.stopPropagation();
+      const pos=Number(d.dataset.pos);
+      if(pos<3) change(id,-1);
+      else if(pos>3) change(id,1);
+      else setVal(id,Number(d.dataset.value));
+    };
+    d.addEventListener('click',choose);
+    d.addEventListener('touchend',choose,{passive:false});
+    box.appendChild(d);
+  });
+}
+function renderAll(){
+  renderCol('hh'); renderCol('mm'); renderCol('ss');
+  $('modalResult').textContent=fmtObj(temp);
+  $('result').textContent=fmtObj(vals);
+}
+function setVal(id,n){
+  const max=maxOf(id);
+  if(n<0)n=max;
+  if(n>max)n=0;
+  temp[id]=n;
+  renderAll();
+  log(id+'='+pad(n));
+}
+function change(id,delta){setVal(id,temp[id]+delta)}
+
+function openModal(){
+  temp.hh=vals.hh; temp.mm=vals.mm; temp.ss=vals.ss;
+  renderAll();
+  $('modal').classList.add('show');
+}
+function closeModal(){$('modal').classList.remove('show')}
+function okModal(){
+  vals.hh=temp.hh; vals.mm=temp.mm; vals.ss=temp.ss;
+  renderAll();
+  closeModal();
+}
+function attachColEvents(){
+  document.querySelectorAll('.col').forEach(col=>{
+    const id=col.dataset.id;
+    let lastY=null;
+    function start(y,e){lastY=y;e.preventDefault();e.stopPropagation()}
+    function move(y,e){
+      if(lastY===null)return;
+      const dy=y-lastY;
+      if(Math.abs(dy)>=18){change(id,dy<0?1:-1);lastY=y}
+      e.preventDefault();e.stopPropagation()
+    }
+    function end(e){lastY=null;e.preventDefault();e.stopPropagation()}
+    col.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();change(id,e.deltaY>0?1:-1)},{passive:false});
+    col.addEventListener('touchstart',e=>{if(e.touches.length)start(e.touches[0].clientY,e)},{passive:false});
+    col.addEventListener('touchmove',e=>{if(e.touches.length)move(e.touches[0].clientY,e)},{passive:false});
+    col.addEventListener('touchend',end,{passive:false});
+    col.addEventListener('touchcancel',end,{passive:false});
+    col.querySelector('.hit.up').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();change(id,-1)});
+    col.querySelector('.hit.down').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();change(id,1)});
+    col.querySelector('.hit.up').addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();change(id,-1)},{passive:false});
+    col.querySelector('.hit.down').addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();change(id,1)},{passive:false});
+  });
+  $('picker').addEventListener('touchmove',e=>{e.preventDefault();e.stopPropagation()},{passive:false});
+}
+$('openBtn').onclick=openModal;
+$('cancelBtn').onclick=closeModal;
+$('okBtn').onclick=okModal;
+$('resetBtn').onclick=()=>{vals.hh=0;vals.mm=0;vals.ss=0;temp.hh=0;temp.mm=0;temp.ss=0;renderAll()};
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+attachColEvents();
+renderAll();
+</script>
+</body>
+</html>
