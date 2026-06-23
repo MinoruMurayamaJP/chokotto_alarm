@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ホイール選択テスト</title>
+<style>
+:root{
+  --bg:#f5f7fb;--panel:#fff;--line:#d8e2f0;--text:#142033;
+  --blue:#0b78ff;--blue2:#e3f2fd;--red:#ffebee;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:"Yu Gothic",Meiryo,system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-text-size-adjust:100%;
+}
+.app{max-width:760px;margin:24px auto;padding:16px}
+h1{font-size:26px;margin:0 0 12px;text-align:center}
+.panel{
+  background:#fff;border:1px solid var(--line);border-radius:18px;
+  padding:18px;box-shadow:0 4px 18px rgba(15,23,42,.06)
+}
+.result{
+  text-align:center;font-size:42px;font-weight:900;margin:18px 0;
+  letter-spacing:.04em;
+}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{
+  height:58px;border-radius:14px;border:1px solid #9ec5fe;
+  background:var(--blue2);color:#075fc5;font-size:18px;font-weight:900;
+}
+button.primary{background:#0b78ff;color:#fff;border-color:#0b78ff}
+button.danger{background:var(--red);color:#b91c1c;border-color:#f1a7a7}
+.modal{
+  position:fixed;inset:0;background:rgba(15,23,42,.35);
+  display:none;align-items:center;justify-content:center;
+  padding:16px;z-index:50;
+}
+.modal.show{display:flex}
+.dialog{
+  background:#fff;border-radius:28px;width:min(720px,100%);
+  max-height:92vh;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.28);
+}
+.head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 24px;border-bottom:1px solid var(--line);
+}
+.head h2{margin:0;font-size:24px}
+.iconBtn{
+  width:60px;height:60px;border-radius:50%;font-size:36px;
+  display:flex;align-items:center;justify-content:center;
+}
+.ok{background:#0b78ff;color:#fff;border-color:#0b78ff}
+.close{background:#f5f5f5;color:#111;border-color:#d0d0d0}
+.body{padding:18px 20px 24px}
+.caption{
+  text-align:center;font-size:22px;font-weight:900;margin:8px 0 10px;
+  letter-spacing:.15em;
+}
+
+/* テスト対象：iPhone風ホイール */
+.picker{
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;
+  width:100%;
+  height:245px;
+  margin:0 auto 18px;
+  border-radius:36px;
+  background:linear-gradient(180deg,#fff 0%,#f9fbfd 48%,#f1f5f8 100%);
+  box-shadow:0 12px 30px rgba(15,23,42,.10), inset 0 1px 0 rgba(255,255,255,.95);
+  overflow:hidden;
+  touch-action:none;
+}
+.picker:before{
+  content:"";
+  position:absolute;left:24px;right:24px;top:calc(50% - 26px);
+  height:52px;border-radius:999px;background:#e9edf0;z-index:0;
+}
+.picker:after{
+  content:"";
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.96) 0%,rgba(255,255,255,.35) 22%,rgba(255,255,255,0) 42%,rgba(255,255,255,0) 58%,rgba(255,255,255,.45) 78%,rgba(255,255,255,.96) 100%);
+  pointer-events:none;z-index:3;
+}
+.col{
+  position:relative;z-index:2;
+  width:86px;height:245px;overflow:hidden;
+  touch-action:none;
+  -webkit-user-select:none;user-select:none;
+}
+.items{
+  height:245px;display:flex;flex-direction:column;justify-content:center;
+}
+.item{
+  height:40px;line-height:40px;text-align:center;
+  font-size:24px;font-weight:800;color:#a8adb4;
+}
+.item.far{font-size:20px;color:#d6d9dd}
+.item.active{
+  height:52px;line-height:52px;
+  font-size:38px;color:#20242a;
+}
+.colon{
+  position:relative;z-index:2;
+  width:18px;text-align:center;font-size:34px;font-weight:900;
+}
+
+/* 上下タップ領域を明示的に置く */
+.hit{
+  position:absolute;left:0;right:0;z-index:6;
+}
+.hit.up{top:0;height:42%}
+.hit.down{bottom:0;height:42%}
+
+.log{
+  font-size:13px;color:#475569;background:#f8fafc;border:1px solid var(--line);
+  border-radius:12px;padding:10px;height:80px;overflow:auto;white-space:pre-wrap;
+}
+@media(max-width:640px){
+  .app{margin:10px auto;padding:12px}
+  h1{font-size:22px}
+  .result{font-size:38px}
+  .dialog{border-radius:26px}
+  .head h2{font-size:22px}
+  .picker{height:230px;border-radius:34px}
+  .col{height:230px;width:78px}
+  .items{height:230px}
+  .item{height:38px;line-height:38px;font-size:23px}
+  .item.active{height:50px;line-height:50px;font-size:36px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>ホイール選択テスト</h1>
+  <div class="panel">
+    <div class="result" id="result">00:00:00</div>
+    <div class="btns">
+      <button class="primary" id="openBtn">Popを開く</button>
+      <button id="resetBtn">00:00:00</button>
+    </div>
+    <p style="text-align:center;color:#64748b;font-weight:700">
+      iPhoneでは、数字の上側・下側タップ／上下スワイプを試してください。
+    </p>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="dialog">
+    <div class="head">
+      <button class="iconBtn close" id="cancelBtn">×</button>
+      <h2>時刻を選択</h2>
+      <button class="iconBtn ok" id="okBtn">✓</button>
+    </div>
+    <div class="body">
+      <div class="caption">HH　　MM　　SS</div>
+      <div class="picker" id="picker">
+        <div class="col" data-id="hh"><div class="items" id="hhItems"></div><div class="hit up"></div><div class="hit down"></div></div>
+        <div class="colon">:</div>
+        <div class="col" data-id="mm"><div class="items" id="mmItems"></div><div class="hit up"></div><div class="hit down"></div></div>
+        <div class="colon">:</div>
+        <div class="col" data-id="ss"><div class="items" id="ssItems"></div><div class="hit up"></div><div class="hit down"></div></div>
+      </div>
+      <div class="result" id="modalResult">00:00:00</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const vals={hh:0,mm:0,ss:0};
+let temp={hh:0,mm:0,ss:0};
+
+function log(s){
+  const el=$('log');
+  el.textContent = new Date().toLocaleTimeString() + ' ' + s + '\n' + el.textContent;
+}
+
+function maxOf(id){return id==='hh'?23:59}
+function around(id,n){
+  const max=maxOf(id);
+  return [n-2,n-1,n,n+1,n+2].map(x=>{
+    if(x<0)x+=max+1;
+    if(x>max)x-=max+1;
+    return x;
+  });
+}
+function fmtObj(o){return `${pad(o.hh)}:${pad(o.mm)}:${pad(o.ss)}`}
+
+function renderCol(id){
+  const box=$(id+'Items');
+  const n=temp[id];
+  box.innerHTML='';
+  around(id,n).forEach((v,i)=>{
+    const d=document.createElement('div');
+    d.className='item' + (i===2?' active':'') + ((i===0||i===4)?' far':'');
+    d.textContent=pad(v);
+    d.dataset.pos=i;
+    d.dataset.value=v;
+    d.addEventListener('click',e=>{
+      e.preventDefault(); e.stopPropagation();
+      const pos=Number(d.dataset.pos);
+      if(pos<2) change(id,-1);
+      else if(pos>2) change(id,1);
+      else setVal(id,Number(d.dataset.value));
+    });
+    d.addEventListener('touchend',e=>{
+      e.preventDefault(); e.stopPropagation();
+      const pos=Number(d.dataset.pos);
+      if(pos<2) change(id,-1);
+      else if(pos>2) change(id,1);
+      else setVal(id,Number(d.dataset.value));
+    },{passive:false});
+    box.appendChild(d);
+  });
+}
+
+function renderAll(){
+  renderCol('hh'); renderCol('mm'); renderCol('ss');
+  $('modalResult').textContent=fmtObj(temp);
+  $('result').textContent=fmtObj(vals);
+}
+
+function setVal(id,n){
+  const max=maxOf(id);
+  if(n<0)n=max;
+  if(n>max)n=0;
+  temp[id]=n;
+  renderAll();
+  log(id+'='+pad(n));
+}
+function change(id,delta){
+  setVal(id,temp[id]+delta);
+}
+
+function openModal(){
+  temp={...vals};
+  renderAll();
+  $('modal').classList.add('show');
+  log('open');
+}
+function closeModal(){
+  $('modal').classList.remove('show');
+  log('close');
+}
+function okModal(){
+  vals.hh=temp.hh; vals.mm=temp.mm; vals.ss=temp.ss;
+  renderAll();
+  closeModal();
+  log('ok '+fmtObj(vals));
+}
+
+function attachColEvents(){
+  document.querySelectorAll('.col').forEach(col=>{
+    const id=col.dataset.id;
+    let lastY=null;
+
+    const start=(y,e)=>{
+      lastY=y;
+      if(e){e.preventDefault();e.stopPropagation();}
+    };
+    const move=(y,e)=>{
+      if(lastY===null)return;
+      const dy=y-lastY;
+      if(Math.abs(dy)>=18){
+        change(id,dy<0?1:-1);
+        lastY=y;
+      }
+      if(e){e.preventDefault();e.stopPropagation();}
+    };
+    const end=e=>{
+      lastY=null;
+      if(e){e.preventDefault();e.stopPropagation();}
+    };
+
+    col.addEventListener('wheel',e=>{
+      e.preventDefault();e.stopPropagation();
+      change(id,e.deltaY>0?1:-1);
+    },{passive:false});
+
+    col.addEventListener('touchstart',e=>{
+      if(e.touches.length)start(e.touches[0].clientY,e);
+    },{passive:false});
+    col.addEventListener('touchmove',e=>{
+      if(e.touches.length)move(e.touches[0].clientY,e);
+    },{passive:false});
+    col.addEventListener('touchend',end,{passive:false});
+    col.addEventListener('touchcancel',end,{passive:false});
+
+    col.addEventListener('pointerdown',e=>{
+      if(e.pointerType==='mouse')return;
+      start(e.clientY,e);
+    },{passive:false});
+    col.addEventListener('pointermove',e=>{
+      if(e.pointerType==='mouse')return;
+      move(e.clientY,e);
+    },{passive:false});
+    col.addEventListener('pointerup',end,{passive:false});
+
+    col.querySelector('.hit.up').addEventListener('click',e=>{
+      e.preventDefault();e.stopPropagation();change(id,-1);
+    });
+    col.querySelector('.hit.down').addEventListener('click',e=>{
+      e.preventDefault();e.stopPropagation();change(id,1);
+    });
+  });
+
+  $('picker').addEventListener('touchmove',e=>{
+    e.preventDefault();
+    e.stopPropagation();
+  },{passive:false});
+}
+
+$('openBtn').onclick=openModal;
+$('cancelBtn').onclick=closeModal;
+$('okBtn').onclick=okModal;
+$('resetBtn').onclick=()=>{vals.hh=0;vals.mm=0;vals.ss=0;temp={...vals};renderAll();log('reset')};
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+
+attachColEvents();
+renderAll();
+</script>
+</body>
+</html>
