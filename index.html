@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>iOS風スクロールホイール HH/MM/SS テスト</title>
+<style>
+:root{--bg:#f5f7fb;--panel:#fff;--line:#d8e2f0;--text:#142033;--blue:#0b78ff;--blue2:#e3f2fd;--green:#e8f5e9}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic",Meiryo,sans-serif;background:var(--bg);color:var(--text);-webkit-text-size-adjust:100%;overscroll-behavior:none}
+.app{max-width:820px;margin:18px auto;padding:14px}
+h1{font-size:24px;margin:0 0 12px;text-align:center}
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 4px 18px rgba(15,23,42,.06)}
+.result{text-align:center;font-size:42px;font-weight:900;margin:14px 0;letter-spacing:.04em}
+.btns,.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button,select{height:52px;border-radius:14px;border:1px solid #9ec5fe;background:var(--blue2);color:#075fc5;font-size:17px;font-weight:900}
+button.primary{background:#0b78ff;color:#fff;border-color:#0b78ff}
+button.green{background:var(--green);color:#15803d;border-color:#86efac}
+.field label{display:block;font-size:14px;font-weight:900;margin:0 0 6px}
+.field select{width:100%;background:#fff;color:#142033;border-color:var(--line);padding:0 12px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.35);display:none;align-items:center;justify-content:center;padding:14px;z-index:50;overscroll-behavior:none}
+.modal.show{display:flex}
+.dialog{background:#fff;border-radius:28px;width:min(720px,100%);max-height:94vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.28)}
+.head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.head h2{margin:0;font-size:22px}
+.iconBtn{width:56px;height:56px;border-radius:50%;font-size:32px;display:flex;align-items:center;justify-content:center}
+.ok{background:#0b78ff;color:#fff;border-color:#0b78ff}
+.close{background:#f5f5f5;color:#111;border-color:#d0d0d0}
+.body{padding:18px 20px 22px}
+.wheelArea{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center;justify-content:center;margin:8px 0 18px}
+.pickerCol{background:#fff;border:1px solid var(--line);border-radius:24px;padding:12px 8px 14px;box-shadow:0 8px 22px rgba(15,23,42,.08)}
+.colLabel{text-align:center;font-weight:900;color:#64748b;margin-bottom:8px;font-size:16px}
+.pickerContainer{position:relative;width:130px;height:220px;margin:0 auto;border-radius:20px;overflow:hidden;background:#fff;perspective:1000px;touch-action:pan-y}
+.pickerHighlight{position:absolute;top:50%;left:5%;width:90%;height:44px;transform:translateY(-50%);border-top:1px solid rgba(0,0,0,.12);border-bottom:1px solid rgba(0,0,0,.12);background:rgba(233,237,240,.55);border-radius:999px;pointer-events:none;z-index:2}
+.pickerFade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.94) 0%,rgba(255,255,255,.35) 18%,rgba(255,255,255,0) 38%,rgba(255,255,255,0) 62%,rgba(255,255,255,.45) 82%,rgba(255,255,255,.94) 100%);pointer-events:none;z-index:3}
+.scroller{width:100%;height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.scroller::-webkit-scrollbar{display:none}
+.pickerList{list-style:none;padding:88px 0;margin:0}
+.pickerItem{height:44px;line-height:44px;text-align:center;font-size:26px;font-weight:800;color:#333;scroll-snap-align:center;transform-style:preserve-3d;backface-visibility:hidden;transition:transform .06s linear,opacity .06s linear,font-size .06s linear,color .06s linear}
+.pickerItem.active{font-size:36px;font-weight:900;color:#111827}
+.wheelColon{font-size:38px;font-weight:900;color:#111827;margin-top:24px}
+.log{font-size:13px;color:#475569;background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px;height:82px;overflow:auto;white-space:pre-wrap}
+.note{text-align:center;color:#64748b;font-weight:800;margin:8px 0 0}
+@media(max-width:640px){.app{margin:8px auto;padding:10px}h1{font-size:21px}.result{font-size:36px}.grid{grid-template-columns:1fr}.wheelArea{gap:6px}.pickerCol{padding:10px 5px 12px;border-radius:22px}.pickerContainer{width:96px;height:210px}.pickerList{padding-top:83px;padding-bottom:83px}.pickerItem{height:44px;line-height:44px;font-size:24px}.pickerItem.active{font-size:34px}.wheelColon{font-size:30px;margin-top:24px}}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>iOS風スクロールホイール HH/MM/SS テスト</h1>
+<div class="panel"><div class="grid">
+<div class="field"><label>初期値</label><select id="presetSel"><option value="00:00:00">00:00:00</option><option value="00:00:30">00:00:30</option><option value="00:01:00">00:01:00</option><option value="00:02:00">00:02:00</option><option value="00:03:00">00:03:00</option><option value="00:05:00">00:05:00</option><option value="00:10:00">00:10:00</option></select></div>
+<div class="field"><label>3D角度</label><select id="angleSel"><option value="12">12 弱</option><option value="16">16</option><option value="20" selected>20 標準</option><option value="24">24</option><option value="28">28 強</option></select></div>
+</div></div>
+<div class="panel"><div class="result" id="result">00:00:00</div><div class="btns"><button class="primary" id="openBtn">Popを開く</button><button class="green" id="applyPresetBtn">初期値セット</button></div><p class="note">本物スクロール＋scroll-snap方式。iPhoneでホイール感を確認してください。</p><div class="log" id="log"></div></div>
+</div>
+<div class="modal" id="modal"><div class="dialog"><div class="head"><button class="iconBtn close" id="cancelBtn">×</button><h2>時刻を選択</h2><button class="iconBtn ok" id="okBtn">✓</button></div><div class="body">
+<div class="wheelArea">
+<div class="pickerCol"><div class="colLabel">HH</div><div class="pickerContainer"><div class="pickerHighlight"></div><div class="pickerFade"></div><div class="scroller" id="hhScroller"><ul class="pickerList" id="hhList"></ul></div></div></div>
+<div class="wheelColon">:</div>
+<div class="pickerCol"><div class="colLabel">MM</div><div class="pickerContainer"><div class="pickerHighlight"></div><div class="pickerFade"></div><div class="scroller" id="mmScroller"><ul class="pickerList" id="mmList"></ul></div></div></div>
+<div class="wheelColon">:</div>
+<div class="pickerCol"><div class="colLabel">SS</div><div class="pickerContainer"><div class="pickerHighlight"></div><div class="pickerFade"></div><div class="scroller" id="ssScroller"><ul class="pickerList" id="ssList"></ul></div></div></div>
+</div>
+<div class="result" id="modalResult">00:00:00</div>
+</div></div></div>
+<script>
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const itemHeight=44;
+const vals={hh:0,mm:0,ss:0};
+let temp={hh:0,mm:0,ss:0};
+const ids=['hh','mm','ss'];
+function log(s){const el=$('log');el.textContent=new Date().toLocaleTimeString()+' '+s+'\n'+el.textContent}
+function maxOf(id){return id==='hh'?23:59}
+function fmtObj(o){return `${pad(o.hh)}:${pad(o.mm)}:${pad(o.ss)}`}
+function parseHMS(s){const [h='0',m='0',sec='0']=String(s||'00:00:00').split(':');return {hh:+h||0,mm:+m||0,ss:+sec||0}}
+function angleFactor(){return Number($('angleSel').value)||20}
+function buildLists(){ids.forEach(id=>{const list=$(id+'List');list.innerHTML='';for(let i=0;i<=maxOf(id);i++){const li=document.createElement('li');li.className='pickerItem';li.textContent=pad(i);li.dataset.value=i;list.appendChild(li)}})}
+function setScroller(id,value,behavior='auto'){const sc=$(id+'Scroller');sc.scrollTo({top:value*itemHeight,behavior});temp[id]=value;updateAllRotations();updateResult()}
+function selectedFromScroll(id){const sc=$(id+'Scroller');const max=maxOf(id);let n=Math.round(sc.scrollTop/itemHeight);if(n<0)n=0;if(n>max)n=max;return n}
+function snapToNearest(id){const n=selectedFromScroll(id);setScroller(id,n,'smooth');log(id+'='+pad(n))}
+function updateRotation(id){const sc=$(id+'Scroller');const items=Array.from($(id+'List').querySelectorAll('.pickerItem'));const scrollTop=sc.scrollTop;const centerIndex=Math.max(0,Math.min(maxOf(id),Math.round(scrollTop/itemHeight)));temp[id]=centerIndex;items.forEach((item,index)=>{const itemOffset=(index*itemHeight)-scrollTop;const angle=(itemOffset/itemHeight)*-angleFactor();if(Math.abs(angle)<90){item.style.transform=`rotateX(${angle}deg) translateZ(90px)`;const opacity=Math.max(0,1-Math.abs(itemOffset/(itemHeight*3.2)));item.style.opacity=opacity}else{item.style.opacity=0}item.classList.toggle('active',index===centerIndex)})}
+function updateAllRotations(){ids.forEach(updateRotation)}
+function updateResult(){$('modalResult').textContent=fmtObj(temp);$('result').textContent=fmtObj(vals)}
+function openModal(){temp.hh=vals.hh;temp.mm=vals.mm;temp.ss=vals.ss;$('modal').classList.add('show');requestAnimationFrame(()=>{ids.forEach(id=>setScroller(id,temp[id],'auto'));updateResult()})}
+function closeModal(){$('modal').classList.remove('show')}
+function okModal(){vals.hh=temp.hh;vals.mm=temp.mm;vals.ss=temp.ss;updateResult();closeModal();log('ok '+fmtObj(vals))}
+function syncPreset(){const p=parseHMS($('presetSel').value);vals.hh=p.hh;vals.mm=p.mm;vals.ss=p.ss;temp.hh=p.hh;temp.mm=p.mm;temp.ss=p.ss;updateResult();log('preset '+fmtObj(vals))}
+function attachEvents(){ids.forEach(id=>{const sc=$(id+'Scroller');let timer=null;sc.addEventListener('scroll',()=>{updateRotation(id);updateResult();clearTimeout(timer);timer=setTimeout(()=>snapToNearest(id),120)},{passive:true})});$('openBtn').onclick=openModal;$('cancelBtn').onclick=closeModal;$('okBtn').onclick=okModal;$('applyPresetBtn').onclick=syncPreset;$('angleSel').onchange=()=>updateAllRotations();$('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()})}
+buildLists();attachEvents();syncPreset();updateAllRotations();
+</script>
+</body></html>
